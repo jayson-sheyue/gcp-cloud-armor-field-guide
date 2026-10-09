@@ -1,0 +1,2 @@
+.story-steps { counter-reset: story; }
+.story-steps li::before { content: counter(story); counter-increment: story; }

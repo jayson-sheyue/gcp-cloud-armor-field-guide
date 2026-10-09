@@ -1,0 +1,7 @@
+{
+  "name": "business-product-guide-template",
+  "private": true,
+  "scripts": {
+    "build": "node build.mjs"
+  }
+}

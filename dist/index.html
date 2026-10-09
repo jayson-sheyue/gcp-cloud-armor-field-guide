@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="面向客户、销售和售前的 GCP Cloud Armor 全景导览：DDoS、WAF、Bot、Adaptive Protection、策略设计、运维、配额与计费。" />
+  <title>GCP Cloud Armor｜售前全景导览</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 4l23 9v16c0 15-9 25-23 31C18 54 9 44 9 29V13l23-9z' fill='%230b57d0'/%3E%3Cpath d='M20 33l8 8 17-19' fill='none' stroke='white' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="override.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./"><span class="shield">◆</span> Cloud Armor 导览</a>
+    <nav><a href="#diagnosis">场景判断</a><a href="#architecture">架构</a><a href="#capabilities">能力地图</a><a href="#expert">技术手册</a><a href="#faq">FAQ</a></nav>
+  </header>
+  <main>
+    <section class="intro">
+      <div>
+        <p class="eyebrow">GOOGLE CLOUD APPLICATION PROTECTION · 官方资料版</p>
+        <h1>先看攻击怎么进来，<br>再决定在<span>哪一层拦住它。</span></h1>
+        <p class="lead">Cloud Armor 不是“给 VM 装个防火墙”。它在 Google 网络边缘为负载均衡后的应用和公开网络端点提供 DDoS 防护、WAF、访问控制、限速、Bot 管理与自适应防御。</p>
+        <div class="hero-actions"><a href="#diagnosis">从客户问题开始</a><a class="secondary" href="product.html?service=foundation">直接看技术全景</a></div>
+      </div>
+      <aside class="signal-card" aria-label="保护链路示意">
+        <div class="signal-title"><span></span>请求进入 Google 边缘</div>
+        <div class="signal-row"><b>01</b><span>L3/L4 DDoS 基础防护</span><em>Always-on</em></div>
+        <div class="signal-row active"><b>02</b><span>Cloud Armor 策略判定</span><em>Allow / Deny</em></div>
+        <div class="signal-row"><b>03</b><span>WAF · Bot · 限速</span><em>L7 controls</em></div>
+        <div class="signal-row"><b>04</b><span>负载均衡 / CDN / 后端</span><em>Protected origin</em></div>
+      </aside>
+    </section>
+
+    <section class="trust-strip"><span>核验日期：2026-10-09</span><span>仅引用 Google Cloud 官方文档</span><span>价格与配额提供官方实时入口</span><span>覆盖 Standard / Enterprise Paygo / Annual</span></section>
+
+    <section id="diagnosis" class="diagnosis">
+      <div class="diagnosis-head"><span class="round-no">1</span><div><p class="eyebrow">一分钟判断</p><h2>客户最担心的风险是什么？</h2><p>选择最接近的问题，先得到业务回答，再下钻到技术能力。</p></div></div>
+      <div class="problem-grid" id="problem-grid"></div>
+      <section id="answer" class="answer" aria-live="polite"></section>
+    </section>
+
+    <section id="architecture" class="section architecture">
+      <div class="section-heading"><p class="eyebrow">先理解全貌</p><h2>Cloud Armor 在哪里生效？</h2><p>核心判断不是“有没有公网 IP”，而是流量经过哪类前端、策略附着到什么资源、需要 L7 还是网络边缘能力。</p></div>
+      <div class="arch-flow">
+        <article><span>Internet</span><b>用户、Bot、攻击者</b><p>IPv4 / IPv6 · HTTP(S) · TCP/SSL · TCP/UDP</p></article><i>→</i>
+        <article class="accent"><span>Google Edge</span><b>Cloud Armor</b><p>策略优先级 · WAF · 限速 · Threat Intel · Adaptive Protection</p></article><i>→</i>
+        <article><span>Frontend</span><b>负载均衡 / CDN</b><p>Application LB · Proxy NLB · Passthrough NLB · Media CDN</p></article><i>→</i>
+        <article><span>Origin</span><b>应用与服务</b><p>实例组 · NEG · Cloud Storage · Serverless · Hybrid / Multicloud</p></article>
+      </div>
+      <div class="policy-types">
+        <article><strong>Backend policy</strong><h3>应用层主防线</h3><p>支持 L3–L7 条件、WAF、限速、重定向、Bot 与 Adaptive Protection；关联 backend service。</p></article>
+        <article><strong>Edge policy</strong><h3>缓存之前先过滤</h3><p>在 Cloud CDN 缓存上游执行；可与 backend policy 共存。后者只处理通过边缘且发生 cache miss 的请求。</p></article>
+        <article><strong>Network edge policy</strong><h3>公开网络端点防护</h3><p>保护区域外部直通式 NLB、协议转发和有公网 IP 的 VM；支持网络 DDoS 与 byte-offset filtering。</p></article>
+        <article><strong>Hierarchical policy</strong><h3>组织级统一基线</h3><p>按组织→文件夹→项目→服务级顺序评估；用 <code>goto_next</code> 把判定交给下一层。</p></article>
+      </div>
+    </section>
+
+    <section id="capabilities" class="section capability-section">
+      <div class="section-heading"><p class="eyebrow">能力地图</p><h2>从“挡住”到“持续调优”</h2><p>Cloud Armor 的价值不是单条 deny 规则，而是策略、信号、自动化与运营闭环。</p></div>
+      <div class="cap-grid">
+        <article><b>01</b><h3>DDoS 防护</h3><p>外部代理型负载均衡的 L3/L4 防护；Enterprise 扩展到高级网络 DDoS、防护可视性及年度版响应与账单保护。</p></article>
+        <article><b>02</b><h3>预配置 WAF</h3><p>基于 OWASP ModSecurity CRS 4.22，覆盖 SQLi、XSS、RCE、LFI/RFI、协议与扫描器等攻击类别。</p></article>
+        <article><b>03</b><h3>自定义 CEL 规则</h3><p>按来源 IP、地区、ASN、路径、方法、Header、JA3/JA4、请求参数和请求体组合条件。</p></article>
+        <article><b>04</b><h3>限速与封禁</h3><p><code>throttle</code> 平滑超限流量；<code>rate_based_ban</code> 对持续超限客户端执行临时封禁。</p></article>
+        <article><b>05</b><h3>Bot 管理</h3><p>与 reCAPTCHA 集成：挑战页、无感评分、token 属性、302 重定向与请求 Header 装饰。</p></article>
+        <article><b>06</b><h3>Adaptive Protection</h3><p>建立流量基线，检测 L7 异常，生成攻击签名与建议规则；Enterprise 提供完整告警内容。</p></article>
+        <article><b>07</b><h3>Threat Intelligence</h3><p>使用 Google 维护的恶意 IP、Tor、匿名代理、VPN、云 IP、搜索引擎等情报源。</p></article>
+        <article><b>08</b><h3>治理与运营</h3><p>层级策略、地址组、预览模式、详细日志、Monitoring、SCC findings 和 IaC 变更流程。</p></article>
+      </div>
+    </section>
+
+    <section class="section rollout">
+      <div><p class="eyebrow">推荐落地方式</p><h2>不要第一天就把所有流量“硬拦”</h2><p>官方最佳实践强调先在 preview mode 观察，再逐步执行。客户真正需要的是可回滚的防护上线流程。</p></div>
+      <ol>
+        <li><b>发现</b><span>确认前端、后端、业务路径、真实客户端 IP 和正常流量基线。</span></li>
+        <li><b>观测</b><span>开启负载均衡日志；WAF 与限速先用 preview；检查误报和业务峰值。</span></li>
+        <li><b>调优</b><span>从 sensitivity 1 开始，排除噪声签名，按路径和业务动作拆分阈值。</span></li>
+        <li><b>执行</b><span>小流量/低风险服务先强制，再推广到关键系统；保留快速回滚方法。</span></li>
+        <li><b>运营</b><span>监控规则命中、拒绝率、5xx、延迟、攻击告警和配额；定期复核。</span></li>
+      </ol>
+    </section>
+
+    <section id="expert" class="expert section">
+      <div class="expert-title"><p class="eyebrow">售前与技术手册</p><h2>12 个主题，回答架构、功能、边界和成本问题</h2><p>每个主题都有“解决什么、怎么组成、怎么落地、关键边界、官方资料”。</p></div>
+      <div id="expert-list" class="expert-list"></div>
+    </section>
+
+    <section id="faq" class="section faq-section">
+      <div class="section-heading"><p class="eyebrow">客户高频追问</p><h2>现场 FAQ</h2><p>先给一句话答案，再展开关键边界。</p></div>
+      <div class="faq-tools"><input id="faq-search" type="search" placeholder="搜索：Cloud CDN、Cloud Run、误报、IP、价格……" aria-label="搜索常见问题"><span id="faq-count"></span></div>
+      <div id="faq-list" class="faq-list"></div>
+    </section>
+
+    <section class="scope section">
+      <p><strong>资料口径：</strong>本 Demo 仅依据 Google Cloud 官方文档、产品页和定价页整理，核验于 2026-10-09。功能可用性会随策略类型、负载均衡类型、范围（global/regional）、服务层级和发布阶段变化；实施前请以每个主题页末尾链接中的实时官方说明为准。</p>
+    </section>
+  </main>
+  <footer><strong>GCP Cloud Armor 售前全景导览</strong><span>官方资料导向 · 不替代针对具体架构的安全评审与成本测算</span></footer>
+  <script src="app.js"></script>
+</body>
+</html>
